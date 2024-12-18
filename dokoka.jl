@@ -38,8 +38,7 @@ function coulomb(r::Float64, q1::Float64, q2::Float64)
 end
 
 
-function rotate(molecule::Molecule, rotcenter::Vector{Float64}, angle::Float64, 
-                i::Float64, j::Float64, k::Float64)
+function rotate(molecule::Molecule, angle::Float64, i::Float64, j::Float64, k::Float64)
     
     rotated_molecule = Vector{Atom}(undef, length(molecule.atoms))
     
@@ -50,7 +49,7 @@ function rotate(molecule::Molecule, rotcenter::Vector{Float64}, angle::Float64,
     for index = eachindex(molecule.atoms)
         
         atom = molecule.atoms[index]
-        position_vector = [atom.x; atom.y; atom.z] - rotcenter
+        position_vector = [atom.x; atom.y; atom.z]
        
         x, y, z = (q0^2 - qlen2) * position_vector + 
                   2 * dot(rotation_vector, position_vector) * rotation_vector + 
@@ -63,11 +62,38 @@ function rotate(molecule::Molecule, rotcenter::Vector{Float64}, angle::Float64,
 end
 
 
+function getsize(molecule::Molecule)
+    x = maximum([atom.x for atom in molecule.atoms]) - minimum([atom.x for atom in molecule.atoms])
+    y = maximum([atom.y for atom in molecule.atoms]) - minimum([atom.y for atom in molecule.atoms])
+    z = maximum([atom.z for atom in molecule.atoms]) - minimum([atom.z for atom in molecule.atoms])
+    return sqrt(x^2 + y^2 + z^2)
+end
+
+
 function getcenter(molecule::Molecule)
     x = sum([atom.x for atom in molecule.atoms]) / length(molecule.atoms)
     y = sum([atom.y for atom in molecule.atoms]) / length(molecule.atoms)
     z = sum([atom.z for atom in molecule.atoms]) / length(molecule.atoms)
     return [x, y, z]
+end
+
+
+function centermol(molecule::Molecule)
+    cm = getcenter(molecule)
+    for atom in molecule.atoms
+        atom.x -= cm[1]
+        atom.y -= cm[2]
+        atom.z -= cm[3]
+    end
+    return molecule
+end
+
+
+function offsetmol(molecule::Molecule, offset::Float64)
+    for atom in molecule.atoms
+        atom.x += offset
+    end
+    return molecule
 end
 
 
@@ -91,11 +117,15 @@ end
 
 
 function generate_configuration(molecule1::Molecule, molecule2::Molecule, n::Int64)
-    cm = getcenter(molecule1) .+ 3
+    molecule1 = centermol(molecule1)
+    molecule2 = centermol(molecule2)
+
+    rotradius = (getsize(molecule1) + getsize(molecule2)) / 2
+    molecule2 = offsetmol(molecule2, rotradius)
     for i = 1:n
         i, j, k = 2 * rand(Float64, 3) .- 1
         angle = 2 * pi * rand(Float64)
-        molecule2 = rotate(molecule2, cm, angle, i, j, k)
+        molecule2 = rotate(molecule2, angle, i, j, k)
         configuration = Configuration([molecule1, molecule2])
         write_movie(configuration, "movie.xyz")
     end
