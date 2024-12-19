@@ -150,5 +150,5 @@ function (@main)(args)
     molecule1 = readmol(args[1])
     molecule2 = readmol(args[2])
     n = parse(Int64, args[3])
-    generate_configuration(molecule1, molecule2, n)
+    @time generate_configuration(molecule1, molecule2, n)
 end
