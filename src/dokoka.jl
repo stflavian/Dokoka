@@ -19,17 +19,13 @@ end
 
 function readmol(filename::String)
     io = open(filename, "r")
-    atoms = Vector{Atom}()
-    i = 1
-    for line in eachline(io)
-        if i <= 2
-            i += 1
-            continue
-        end
-        fields = split(line)
-        push!(atoms, Atom(fields[1], [parse(Float64, fields[2]); parse(Float64, fields[3]); 
-                                      parse(Float64, fields[4])]))
-        i += 1
+    natoms = parse(Int64, readline(io))
+    atoms = Vector{Atom}(undef, natoms)
+    readline(io)
+    for i in 1:natoms
+        data = split(readline(io))
+        atoms[i] = Atom(data[1], [parse(Float64, data[2]); parse(Float64, data[3]); 
+                                      parse(Float64, data[4])])
     end
     close(io)
     return Molecule(atoms)
