@@ -1,7 +1,7 @@
-#!/usr/bin/env julia
+#!/usr/bin/env -S julia --project=~/Projects/dokoka/.
 
 import LinearAlgebra as LA
-
+import ArgParse
 
 mutable struct Atom
     species::String
@@ -14,6 +14,53 @@ end
 
 mutable struct Configuration
     molecules::Vector{Molecule}
+end
+
+
+function parseargs()
+    settings = ArgParse.ArgParseSettings()
+    settings.prog = "dokoka"
+    settings.description = "A program that generates conformations of molecules"
+    settings.version = "1.0a"
+    settings.add_version = true
+
+    ArgParse.@add_arg_table! settings begin
+        "molecules"
+            required = true
+            nargs = 2
+            action = "store_arg"
+            arg_type = String
+            help = "Molecules to be repositioned"
+        "--displacement", "-d"
+            action = "store_arg"
+            arg_type = String
+            default = "radial"
+            help = "Type of displacement used for the second molecule"
+        "--position", "-r"
+            nargs = 3
+            action = "store_arg"
+            arg_type = Float64
+            default = [0.0, 0.0, 0.0]
+            help = "Position of the second molecule"
+        "--axis", "-x"
+            nargs = 3
+            action = "store_arg"
+            arg_type = Float64
+            default = [1.0, 0.0, 0.0]
+            help = "Axis of rotation used for the second molecule"
+        "--angle", "-a"
+            action = "store_arg"
+            arg_type = Float64
+            default = 0.0
+            help = "Angle of rotation used for the second molecule"
+        "--number", "-n"
+            action = "store_arg"
+            arg_type = Int64
+            default = 10
+            help = "Number of conformations generated"
+    end
+    
+    return ArgParse.parse_args(settings)
 end
 
 
@@ -74,6 +121,17 @@ function displace!(molecule::Molecule, displacement::Vector{Float64})
 end
 
 
+function goradial!(molecule1::Molecule, molecule2::Molecule, position::Vector{Float64},
+    axis::Vector{Float64}, angle::Float64)
+    
+    center!(molecule1)
+    center!(molecule2)
+    rotate!(molecule2, angle, axis[1], axis[2], axis[3])
+
+
+
+end
+
 function generate_configuration(molecule1::Molecule, molecule2::Molecule, n::Int64)
     center!(molecule1)
     center!(molecule2)
@@ -107,9 +165,10 @@ function write_movie(configuration::Configuration, filename::String)
 end
 
 
-function (@main)(args)
-    molecule1 = readmol(args[1])
-    molecule2 = readmol(args[2])
-    n = parse(Int64, args[3])
+function (@main)(_)
+    args = parseargs()
+    molecule1 = readmol(args["molecules"][1])
+    molecule2 = readmol(args["molecules"][2])
+    n = args["number"]
     @time generate_configuration(molecule1, molecule2, n)
 end
