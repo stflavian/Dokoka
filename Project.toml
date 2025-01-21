@@ -1,8 +1,12 @@
-authors = ["Flavian Stavarache <FlavianStavarache@outlook.com>"]
 name = "Dokoka"
 uuid = "25e621dc-f815-42e5-8ba3-be12c24bdffe"
+authors = ["Flavian Stavarache <FlavianStavarache@outlook.com>"]
 version = "1.0.0-alpha"
 
 [deps]
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+
+[compat]
+Random = "1.11.0"
