@@ -1,7 +1,14 @@
-#!/usr/bin/env -S julia --project=~/Projects/dokoka/.
+#!/usr/bin/env -S julia --project=~/Projects/Dokoka/.
+
+module Dokoka
+
+export Atom, Molecule, Configuration
+export parseargs, readmol
+export goangular!, goradial!, gorotational!, gorandom!
 
 import LinearAlgebra as LA
 import ArgParse
+import Random
 
 mutable struct Atom
     species::String
@@ -17,7 +24,7 @@ mutable struct Configuration
 end
 
 
-function parseargs()
+function parseargs(interactive::Bool = true)
     settings = ArgParse.ArgParseSettings()
     settings.prog = "dokoka"
     settings.description = "A program that generates conformations of molecules"
@@ -60,7 +67,11 @@ function parseargs()
             help = "Number of conformations generated"
     end
     
-    return ArgParse.parse_args(settings)
+    if interactive 
+        return ArgParse.parse_args(settings)
+    end
+    
+    return 0
 end
 
 
@@ -234,7 +245,7 @@ function write_movie(configuration::Configuration, io::IO, comment::Any)
 end
 
 
-function (@main)(_)
+function julia_main()::Cint
     
     # Parse the CLI arguments
     args = parseargs()
@@ -255,4 +266,12 @@ function (@main)(_)
     )
     
     get(methods, args["method"], gorandom!)(molecule1, molecule2, position, axis, angle, n)
+    return 0
+end
+
+end
+
+
+function (@main)(_)
+    Dokoka.julia_main() 
 end
