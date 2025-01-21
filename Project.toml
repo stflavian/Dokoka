@@ -1,5 +1,6 @@
 authors = ["Flavian Stavarache <FlavianStavarache@outlook.com>"]
 name = "Dokoka"
+uuid = "25e621dc-f815-42e5-8ba3-be12c24bdffe"
 version = "1.0.0-alpha"
 
 [deps]
