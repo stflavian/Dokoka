@@ -234,7 +234,7 @@ end
 
 
 function write_movie(configuration::Configuration, io::IO, comment::Any)
-    size = length(configuration.molecules) * length(configuration.molecules[1].atoms)
+    size = length(configuration.molecules[1].atoms) + length(configuration.molecules[2].atoms)
     println(io, size)
     println(io, comment)
     for molecule in configuration.molecules
@@ -269,7 +269,6 @@ function julia_main()::Cint
     return 0
 end
 
-end
+#julia_main()
 
-using Dokoka
-Dokoka.julia_main()
+end
