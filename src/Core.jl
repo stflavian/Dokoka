@@ -2,9 +2,9 @@
 
 module Dokoka
 
-export Atom, Molecule, Configuration
-export parseargs, readmol
+export parseargs
 export goangular!, goradial!, gorotational!, gorandom!
+export julia_main
 
 import LinearAlgebra as LA
 import ArgParse
@@ -271,7 +271,5 @@ end
 
 end
 
-
-function (@main)(_)
-    Dokoka.julia_main() 
-end
+using Dokoka
+Dokoka.julia_main()
