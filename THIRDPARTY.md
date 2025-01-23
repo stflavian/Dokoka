@@ -11,7 +11,7 @@ of the Julia language. The following external libraries are shipped alongside th
 software:
 
  - [LIBBLASTRAMPOLINE](https://github.com/staticfloat/libblastrampoline/blob/main/LICENSE): MIT License        
- - [DSFMT][https://github.com/MersenneTwister-Lab/dSFMT/blob/master/LICENSE.txt]: BSD-3 License                 
+ - [DSFMT](https://github.com/MersenneTwister-Lab/dSFMT/blob/master/LICENSE.txt): BSD-3 License                 
  - [GCC](https://github.com/gcc-mirror/gcc/blob/master/COPYING.LIB): LGPL2.1 License and Notice
  - [GMP](https://gmplib.org/manual/Copying.html#Copying): LGPL3+ License or GPL2+ License    
  - [LLVM](https://releases.llvm.org/3.9.0/LICENSE.TXT): UIUC License                
@@ -20,6 +20,6 @@ software:
  - [LIBUV](https://github.com/JuliaLang/libuv/blob/julia-uv2-1.39.0/LICENSE): MIT License
  - [ZLIB](https://zlib.net/zlib_license.html): ZLib License
  - [OPENBLAS](https://raw.github.com/xianyi/OpenBLAS/master/LICENSE): BSD-3 License  
- - [OPENLIBM][https://github.com/JuliaMath/openlibm/blob/master/LICENSE.md]: MIT License and BSD-2 License and ISC License 
+ - [OPENLIBM](https://github.com/JuliaMath/openlibm/blob/master/LICENSE.md): MIT License and BSD-2 License and ISC License 
  - [PCRE](https://www.pcre.org/licence.txt): BSD-3 License
 
