@@ -15,4 +15,4 @@ distro_name = readline(release_file)
 close(release_file)
 
 create_app(".", "build/$distro_name", precompile_execution_file="scripts/Precompile.jl",
-            executables=["dokoka" => "julia_main"])
+            executables=["dokoka" => "julia_main"], force=true)
