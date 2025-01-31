@@ -146,7 +146,7 @@ function goradial!(molecule1::Molecule, molecule2::Molecule, position::Vector{Fl
     # Get unit vector and distances
     init_distance = LA.norm(position) 
     unit = position ./ init_distance
-    d_distance = getsize(molecule1) / n
+    d_distance = (10 - init_distance) / n
 
     # Generate the conformations and write the results
     io = open("radial.xyz", "w")
