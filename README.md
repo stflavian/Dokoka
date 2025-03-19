@@ -11,14 +11,12 @@ of cations and anions.
 4. [Contributing](#contributing)
 
 ## Introduction
--------------
 
 Dokoka is a script that generates conformations of ionic liquids using random or 
 user-defined positioning of cations and anions. The script uses Julia, a high-level, 
 high-performance language, and is compiled to ensure maximal performance. 
 
 ## Usage
------
 
 To use the script, simply run it from the command line with the following arguments:
 
@@ -45,7 +43,6 @@ dokoka C4MIM.xyz Cl.xyz --method random --position 0.1 0.0 0.0 --number 1000
 ```
 
 ## Installation
--------------
 
 Pre-compiled binaries are included in the [Release section][1] on GitHub. You can 
 download and use these binaries as is. For maximal compatibility, use the Debian 12
@@ -60,7 +57,6 @@ To build the script manually, follow these steps:
 The compiled scripts will be available in the `build/{build-name}/bin/` directory.
 
 ## Contributing
-------------
 
 Feel free to contribute to this script by submitting a pull request or creating an 
 issue.
