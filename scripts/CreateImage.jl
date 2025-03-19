@@ -24,7 +24,7 @@ close(release_file)
 # Get the distro version
 release_file = open("/etc/os-release", "r")
 _ = readuntil(release_file, "\nVERSION_ID=")
-distro_id = readline(release_file)
+distro_id = strip(readline(release_file), '\"')
 close(release_file)
 
 # Create the build

@@ -412,6 +412,6 @@ function main()::Cint
     return 0
 end
 
-main()
+#main()
 
 end

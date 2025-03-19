@@ -24,16 +24,16 @@ Dokoka.parseargs(false)
 molecule1 = Dokoka.readmol("mock-build.xyz") 
 molecule2 = Dokoka.readmol("mock-build.xyz")
 
-Dokoka.goradial!(molecule1, molecule2, [0.0, 5.0, 0.0], [1.0, 0.0, 0.0], 0.0, 1)
+Dokoka.goradial!(molecule1, molecule2, [0.0, 5.0, 0.0], [1.0, 0.0, 0.0], 0.0, 1, 20.0)
 rm("radial.xyz")
 
-Dokoka.gorotational!(molecule1, molecule2, [0.0, 5.0, 0.0], [1.0, 0.0, 0.0], 0.0, 1)
+Dokoka.gorotational!(molecule1, molecule2, [0.0, 5.0, 0.0], [1.0, 0.0, 0.0], 0.0, 1, 360.0)
 rm("rotational.xyz")
 
-Dokoka.goangular!(molecule1, molecule2, [0.0, 5.0, 0.0], [1.0, 0.0, 0.0], 0.0, 1)
+Dokoka.goangular!(molecule1, molecule2, [0.0, 5.0, 0.0], [1.0, 0.0, 0.0], 0.0, 1, 180.0)
 rm("angular.xyz")
 
-Dokoka.gorandom!(molecule1, molecule2, [0.0, 5.0, 0.0], [1.0, 0.0, 0.0], 0.0, 1)
+Dokoka.gorandom!(molecule1, molecule2, [0.0, 5.0, 0.0], [1.0, 0.0, 0.0], 0.0, 1, 0.0)
 rm("random.xyz")
 
 rm("mock-build.xyz")
