@@ -27,8 +27,8 @@ end
 function parseargs(interactive::Bool = true)
     settings = ArgParse.ArgParseSettings()
     settings.prog = "dokoka"
-    settings.description = "A program that generates conformations of molecules"
-    settings.version = "1.0a"
+    settings.description = "A program that generates conformations of ionic liquids"
+    settings.version = "1.0b"
     settings.add_version = true
 
     ArgParse.@add_arg_table! settings begin
@@ -65,6 +65,11 @@ function parseargs(interactive::Bool = true)
             arg_type = Int64
             default = 10
             help = "Number of conformations generated"
+        "--limit", "-l"
+            action = "store_arg"
+            arg_type = Float64
+            default = 0
+            help = "The upper limit for the movement (ignored for random motion)"
     end
     
     if interactive 
@@ -75,6 +80,11 @@ function parseargs(interactive::Bool = true)
 end
 
 
+"""
+    readmol(filename::String)
+
+Read an .xyz file and output a Molecule object from it.
+"""
 function readmol(filename::String)
     io = open(filename, "r")
     natoms = parse(Int64, readline(io))
@@ -90,6 +100,11 @@ function readmol(filename::String)
 end
 
 
+"""
+    getsize(molecule::Molecule)
+
+Enclose the molecule in a box and get the long diagonal.
+"""
 function getsize(molecule::Molecule)
     x = diff(collect(extrema([atom.r[1] for atom in molecule.atoms])))[1]
     y = diff(collect(extrema([atom.r[2] for atom in molecule.atoms])))[1]
@@ -98,11 +113,21 @@ function getsize(molecule::Molecule)
 end
 
 
+"""
+    getcenter(molecule::Molecule)
+
+Get the center of the molecule using unitary mass.
+"""
 function getcenter(molecule::Molecule)
     return sum([atom.r for atom in molecule.atoms]) ./ length(molecule.atoms)
 end
 
 
+"""
+    rotate!(molecule::Molecule, angle::Float64, i::Float64, j::Float64, k::Float64)
+
+Rotate the molecule around an axis which passes through the origin.
+"""
 function rotate!(molecule::Molecule, angle::Float64, i::Float64, j::Float64, k::Float64)
     
     rotation_vector = sin(angle/2) / sqrt(i^2 + j^2 + k^2) * [i; j; k]
@@ -117,6 +142,13 @@ function rotate!(molecule::Molecule, angle::Float64, i::Float64, j::Float64, k::
 end
 
 
+"""
+    center!(molecule::Molecule)
+
+Place the center of the molecule in the origin.
+
+See also [`getcenter`](@ref).
+"""
 function center!(molecule::Molecule)
     cm = getcenter(molecule)
     for atom in molecule.atoms
@@ -125,6 +157,11 @@ function center!(molecule::Molecule)
 end
 
 
+"""
+    displace!(molecule::Molecule)
+
+Displace a molecule by a given vector.
+"""
 function displace!(molecule::Molecule, displacement::Vector{Float64})
     for atom in molecule.atoms
         atom.r += displacement
@@ -132,9 +169,64 @@ function displace!(molecule::Molecule, displacement::Vector{Float64})
 end
 
 
-function goradial!(molecule1::Molecule, molecule2::Molecule, position::Vector{Float64},
-    axis::Vector{Float64}, angle::Float64, n::Int64)
+"""
+    check_overlap(molecule1::Molecule, molecule2::Molecule)
+
+Check if the atoms of the two molecules overlap.
+"""
+function check_overlap(molecule1::Molecule, molecule2::Molecule)
+    for atom1 in molecule1.atoms
+        for atom2 in molecule2.atoms
+            if LA.norm(atom1.r - atom2.r) <= 2.5
+                return true
+            end
+        end
+    end
+    return false
+end
+
+
+"""
+    untangle!(molecule1::Molecule, molecule2::Molecule)
+
+Untangle the two molecules if they overlap.
+
+Move the second molecule by 0.1 Angstroms along the axis connecting the centers of the two 
+molecules until the two molecules no longer overlap.
+"""
+function untangle!(molecule1::Molecule, molecule2::Molecule)
+    center1 = getcenter(molecule1)
+    center2 = getcenter(molecule2)
     
+    distance = LA.norm(center1 - center2)
+    unit = (center2 - center1) ./ distance
+    
+    while check_overlap(molecule1, molecule2)
+        displace!(molecule2, unit * 0.1)
+    end
+end
+
+
+"""
+    goradial!(molecule1::Molecule, molecule2::Molecule, position::Vector{Float64},
+              axis::Vector{Float64}, angle::Float64, n::Int64, limit::Float64)
+
+Radially displace the second molecule along the axis connecting the centers of the two 
+molecules. 
+
+The second molecule can be rotated alongside its center using the `axis` and `angle` 
+keywords. Since the user has full control over the initial position, untangling is not
+used. The molecule will be displaced until the distance between the two centers is larger
+than 10 Angstroms, or the user defined limit.
+"""
+function goradial!(molecule1::Molecule, molecule2::Molecule, position::Vector{Float64},
+    axis::Vector{Float64}, angle::Float64, n::Int64, limit::Float64)
+    
+    # Set limit
+    if limit == 0
+        limit = 10
+    end
+
     # Center the molecules
     center!(molecule1)
     center!(molecule2)
@@ -146,11 +238,11 @@ function goradial!(molecule1::Molecule, molecule2::Molecule, position::Vector{Fl
     # Get unit vector and distances
     init_distance = LA.norm(position) 
     unit = position ./ init_distance
-    d_distance = (10 - init_distance) / n
+    d_distance = (limit - init_distance) / n
 
     # Generate the conformations and write the results
     io = open("radial.xyz", "w")
-    for i in 1:n
+    for i in 0:n-1
         displace!(molecule2, unit .* d_distance)
         write_movie(Configuration([molecule1, molecule2]), io, init_distance + i * d_distance)
     end
@@ -158,9 +250,24 @@ function goradial!(molecule1::Molecule, molecule2::Molecule, position::Vector{Fl
 end
 
 
+"""
+    gorotational!(molecule1::Molecule, molecule2::Molecule, position::Vector{Float64},
+                  axis::Vector{Float64}, angle::Float64, n::Int64, limit::Float64)
+
+Rotate the second molecule in place along a user defined axis. 
+
+The second molecule can be rotated alongside its center using the `axis` and `angle` 
+keywords. Since the user has full control over the initial position, untangling is not
+used. The molecule will be rotated 360 degrees, or the user defined limit.
+"""
 function gorotational!(molecule1::Molecule, molecule2::Molecule, position::Vector{Float64},
-    axis::Vector{Float64}, angle::Float64, n::Int64)
+    axis::Vector{Float64}, angle::Float64, n::Int64, limit::Float64)
     
+    # Set limit
+    if limit == 0
+        limit = 360
+    end
+
     # Center the molecules
     center!(molecule1)
     center!(molecule2)
@@ -170,11 +277,11 @@ function gorotational!(molecule1::Molecule, molecule2::Molecule, position::Vecto
     displace!(molecule2, position) 
 
     # Get unit of rotational movement
-    d_angle = 2 * pi / n
+    d_angle = limit * pi / 180 / n
 
     # Generate the conformations and write the results
     io = open("rotational.xyz", "w")
-    for i in 1:n
+    for i in 0:n-1
         center!(molecule2)
         rotate!(molecule2, d_angle, axis[1], axis[2], axis[3])
         displace!(molecule2, position)
@@ -184,9 +291,24 @@ function gorotational!(molecule1::Molecule, molecule2::Molecule, position::Vecto
 end
 
 
+"""
+    goangular!(molecule1::Molecule, molecule2::Molecule, position::Vector{Float64},
+               axis::Vector{Float64}, angle::Float64, n::Int64, limit::Float64)
+
+Rotate the second molecule around the origin along a user defined axis. 
+
+The second molecule can be rotated alongside its center using the `axis` and `angle` 
+keywords. Untangling is used. The molecule will be rotated 360 degrees, or the user defined 
+limit.
+"""
 function goangular!(molecule1::Molecule, molecule2::Molecule, position::Vector{Float64},
-    axis::Vector{Float64}, angle::Float64, n::Int64)
+    axis::Vector{Float64}, angle::Float64, n::Int64, limit::Float64)
     
+    # Set limit
+    if limit == 0
+        limit = 360
+    end
+
     # Center the molecules
     center!(molecule1)
     center!(molecule2)
@@ -196,21 +318,28 @@ function goangular!(molecule1::Molecule, molecule2::Molecule, position::Vector{F
     displace!(molecule2, position) 
 
     # Get unit of rotational movement
-    d_angle = 2 * pi / n
+    d_angle = limit * pi / 180 / n
 
     # Generate the conformations and write the results
     io = open("angular.xyz", "w")
-    for i in 1:n
+    for i in 0:n-1
         rotate!(molecule2, d_angle, axis[1], axis[2], axis[3])
+        untangle!(molecule1, molecule2)
         write_movie(Configuration([molecule1, molecule2]), io, i * d_angle)
     end
     close(io)
 end
 
 
+"""
+    gorandom!(molecule1::Molecule, molecule2::Molecule, position::Vector{Float64},
+              axis::Vector{Float64}, angle::Float64, n::Int64, limit::Float64)
+
+Rotate the second molecule randomly around the first molecule. 
+"""
 function gorandom!(molecule1::Molecule, molecule2::Molecule, position::Vector{Float64},
-    axis::Vector{Float64}, angle::Float64, n::Int64)
-    
+    axis::Vector{Float64}, angle::Float64, n::Int64, limit::Float64)
+
     # Center the molecules
     center!(molecule1)
     center!(molecule2)
@@ -227,12 +356,20 @@ function gorandom!(molecule1::Molecule, molecule2::Molecule, position::Vector{Fl
     io = open("random.xyz", "w")
     for i = 1:n
         rotate!(molecule2, angles[i], is[i], js[i], ks[i])
+        untangle!(molecule1, molecule2)
         write_movie(Configuration([molecule1, molecule2]), io, "Generated by dokoka")
+        center!(molecule2)
+        displace!(molecule2, position)
     end
     close(io)
 end
 
 
+"""
+    write_movie(configuration::Configuration, io::IO, comment::Any)
+
+Append the conformation to the specified IO file.
+"""
 function write_movie(configuration::Configuration, io::IO, comment::Any)
     size = length(configuration.molecules[1].atoms) + length(configuration.molecules[2].atoms)
     println(io, size)
@@ -244,8 +381,12 @@ function write_movie(configuration::Configuration, io::IO, comment::Any)
     end
 end
 
+"""
+    main()::Cint
 
-function julia_main()::Cint
+Julia function used for compilation.
+"""
+function main()::Cint
     
     # Parse the CLI arguments
     args = parseargs()
@@ -257,6 +398,7 @@ function julia_main()::Cint
     axis = args["axis"]
     angle = args["angle"]
     n = args["number"]
+    limit = args["limit"]
     
     methods = Dict{String, Function}(
         "radial" => goradial!,
@@ -265,10 +407,11 @@ function julia_main()::Cint
         "random" => gorandom!
     )
     
-    get(methods, args["method"], gorandom!)(molecule1, molecule2, position, axis, angle, n)
+    get(methods, args["method"], gorandom!)(molecule1, molecule2, position, 
+                                            axis, angle, n, limit)
     return 0
 end
 
-#julia_main()
+main()
 
 end
